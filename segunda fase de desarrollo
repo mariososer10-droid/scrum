@@ -1,0 +1,133 @@
+import React, { useState, useEffect } from 'react';
+
+// Datos iniciales de simulación
+const initialCart = [
+  { id: 1, name: "Cuota de Mantenimiento - Octubre", price: 850, qty: 1 },
+  { id: 2, name: "Reserva de Salón de Eventos", price: 500, qty: 1 }
+];
+
+export default function VillaFontanaSprint2App() {
+  const [cart, setCart] = useState(initialCart);
+  const [step, setStep] = useState('checkout'); // 'checkout' | 'history'
+  const [history, setHistory] = useState([]);
+  const [paymentData, setPaymentData] = useState({ cardName: '', cardNumber: '', expiry: '', cvc: '' });
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Cálculo de totales
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const tax = subtotal * 0.16;
+  const total = subtotal + tax;
+
+  const handleInputChange = (e) => {
+    setPaymentData({ ...paymentData, [e.target.name]: e.target.value });
+  };
+
+  const handleProcessPayment = (e) => {
+    e.preventDefault();
+    if (!paymentData.cardNumber || !paymentData.cardName) {
+      alert("Por favor complete los campos obligatorios del pago.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setTimeout(() => {
+      const newOrder = {
+        id: `FOL-${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleDateString(),
+        items: [...cart],
+        total: total.toFixed(2),
+        status: 'Aprobado'
+      };
+
+      setHistory([newOrder, ...history]);
+      setCart([]);
+      setIsProcessing(false);
+      setStep('history');
+      alert(`¡Pago procesado con éxito! Folio: ${newOrder.id}`);
+    }, 1500);
+  };
+
+  return (
+    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '20px auto', padding: '20px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <header style={{ borderBottom: '2px solid #007bff', paddingBottom: '10px', marginBottom: '20px' }}>
+        <h2>Villa Fontana Residencial — Segundo Avance (Sprint 2)</h2>
+        <p><strong>Desarrollador:</strong> Mario Sosa Serrano | <strong>Repositorio:</strong> GitHub - Villa Fontana React</p>
+        <div>
+          <button 
+            onClick={() => setStep('checkout')}
+            style={{ padding: '8px 16px', marginRight: '10px', backgroundColor: step === 'checkout' ? '#007bff' : '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Pasarela de Pago (HU-04)
+          </button>
+          <button 
+            onClick={() => setStep('history')}
+            style={{ padding: '8px 16px', backgroundColor: step === 'history' ? '#28a745' : '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Historial de Pedidos (HU-05) [{history.length}]
+          </button>
+        </div>
+      </header>
+
+      {step === 'checkout' && (
+        <div>
+          <h3>Resumen del Carrito</h3>
+          {cart.length === 0 ? (
+            <p>El carrito está vacío. Realice un nuevo pedido desde el catálogo.</p>
+          ) : (
+            <div>
+              <ul>
+                {cart.map(item => (
+                  <li key={item.id}>{item.name} x {item.qty} - ${item.price * item.qty} MXN</li>
+                ))}
+              </ul>
+              <div style={{ backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '4px', marginBottom: '15px' }}>
+                <p>Subtotal: ${subtotal.toFixed(2)} MXN</p>
+                <p>IVA (16%): ${tax.toFixed(2)} MXN</p>
+                <h4>Total a Pagar: ${total.toFixed(2)} MXN</h4>
+              </div>
+
+              <h3>Datos de Pago Seguro</h3>
+              <form onSubmit={handleProcessPayment}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label>Nombre en la Tarjeta: </label><br/>
+                  <input type="text" name="cardName" value={paymentData.cardName} onChange={handleInputChange} style={{ width: '100%', padding: '8px' }} required />
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label>Número de Tarjeta: </label><br/>
+                  <input type="text" name="cardNumber" maxLength="16" placeholder="1234567890123456" value={paymentData.cardNumber} onChange={handleInputChange} style={{ width: '100%', padding: '8px' }} required />
+                </div>
+                <button type="submit" disabled={isProcessing} style={{ padding: '10px 20px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                  {isProcessing ? 'Procesando Pago...' : 'Confirmar y Pagar'}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === 'history' && (
+        <div>
+          <h3>Historial de Transacciones y Comprobantes</h3>
+          {history.length === 0 ? (
+            <p>No hay compras ni pagos registrados aún.</p>
+          ) : (
+            <div>
+              {history.map(order => (
+                <div key={order.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '6px', marginBottom: '10px' }}>
+                  <p><strong>Folio:</strong> {order.id} | <strong>Fecha:</strong> {order.date}</p>
+                  <p><strong>Estado:</strong> <span style={{ color: 'green', fontWeight: 'bold' }}>{order.status}</span></p>
+                  <ul>
+                    {order.items.map((it, idx) => (
+                      <li key={idx}>{it.name} - ${it.price} MXN</li>
+                    ))}
+                  </ul>
+                  <p><strong>Monto Total:</strong> ${order.total} MXN</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
